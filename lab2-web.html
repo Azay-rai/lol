@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azaybee Rai</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-image: url('https://cdn.britannica.com/34/235834-050-C5843610/two-different-breeds-of-cats-side-by-side-outdoors-in-the-garden.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: #f5eded;
+        }
+        h1 {
+            font-family: 'Pacifico', cursive;
+            font-size: 3rem;
+            color: #7a0303;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:active {
+            background-color: #dc6510;
+        }
+        #azay {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: rgba(243, 252, 252, 0.8);
+            border: 1px solid #e8c919;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+    </style>
+    
+
+</head>
+<body onload="fetchData()">
+    <h1>Types of Cat Breeds</h1>
+    <button onclick="allName()">All Names</button>
+    <div>
+        <input type="text" id="searchBox" placeholder="Enter health issue number..." disabled>
+        <button onclick="displayHealthIssues()" disabled>Health Issues</button>
+    </div>
+    <div id="weightOption" style="display: none;">
+        <label>
+            <input type="radio" name="weightUnit" value="imperial" checked>Imperial
+        </label>
+        <label>
+            <input type="radio" name="weightUnit" value="metric">Metric
+        </label>
+    </div>
+    <button onclick="displayWeightRanges()" disabled>Weight</button>
+    <div>
+        <button onclick="displayIntelligenceAndFriendliness()" disabled>Intelligence - Friendly</button>
+    </div>
+    <div>
+        <button onclick="displayAverageIntelligence()" disabled>Average Intelligence</button>
+    </div>
+    <div>
+        <button onclick="displayAverageIntelligenceForChildFriendly()" disabled>Average Intelligence for Child Friendly</button>
+    </div>
+    <div id="azay"></div>
+
+    <script>
+        let catData = [];
+
+        function fetchData() {
+            fetch('https://api.thecatapi.com/v1/breeds')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Something went wrong.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    catData = data;
+                    enableButtons();
+                })
+                .catch(error => {
+                    console.error('Error fetching JSON:', error);
+                });
+        }
+
+        function enableButtons() {
+            document.getElementById('searchBox').disabled = false;
+            document.querySelectorAll('button').forEach(button => button.disabled = false);
+            document.getElementById('weightOption').style.display = 'block';
+        }
+
+        function allName() {
+            const jsonContentElement = document.getElementById('azay');
+            jsonContentElement.innerHTML = "";
+            catData.forEach(value => {
+                const lineBreak = document.createElement('br');
+                jsonContentElement.appendChild(document.createTextNode(value.name));
+                jsonContentElement.appendChild(lineBreak);
+            });
+        }
+
+        function displayHealthIssues() {
+            const jsonContentElement = document.getElementById('azay');
+            jsonContentElement.innerHTML = "";
+            const healthIssueNumber = document.getElementById('searchBox').value;
+
+            if (healthIssueNumber) {
+                const catsWithHealthIssue = catData.filter(cat => {
+                    const healthIssues = cat.health_issues;
+                    if (Array.isArray(healthIssues)) {
+                        return healthIssues.includes(parseInt(healthIssueNumber));
+                    } else {
+                        return healthIssues === parseInt(healthIssueNumber);
+                    }
+                });
+                if (catsWithHealthIssue.length > 0) {
+                    catsWithHealthIssue.forEach(cat => {
+                        const lineBreak = document.createElement('br');
+                        jsonContentElement.appendChild(document.createTextNode(cat.name));
+                        jsonContentElement.appendChild(lineBreak);
+                    });
+                } else {
+                    jsonContentElement.textContent = "No cats found with the specified health issue.";
+                }
+            } else {
+                jsonContentElement.textContent = "Please enter a health issue number.";
+            }
+        }
+
+        function displayWeightRanges() {
+            const jsonContentElement = document.getElementById('azay');
+            jsonContentElement.innerHTML = "";
+            const weightUnit = document.querySelector('input[name="weightUnit"]:checked').value;
+
+            catData.forEach(cat => {
+                const lineBreak = document.createElement('br');
+                const weightRange = cat.weight[weightUnit];
+                jsonContentElement.appendChild(document.createTextNode(`${cat.name}: ${weightRange}`));
+                jsonContentElement.appendChild(lineBreak);
+            });
+        }
+
+        function displayIntelligenceAndFriendliness() {
+            const jsonContentElement = document.getElementById('azay');
+            jsonContentElement.innerHTML = "";
+
+            catData.forEach(cat => {
+                const lineBreak = document.createElement('br');
+                const intelligence = cat.intelligence;
+                const childFriendly = cat.child_friendly;
+                jsonContentElement.appendChild(document.createTextNode(`${cat.name}: I=${intelligence}, F=${childFriendly}`));
+                jsonContentElement.appendChild(lineBreak);
+            });
+        }
+
+        function displayAverageIntelligence() {
+            const jsonContentElement = document.getElementById('azay');
+            jsonContentElement.innerHTML = "";
+
+            const intelligenceSum = catData.reduce((sum, cat) => sum + cat.intelligence, 0);
+            const averageIntelligence = intelligenceSum / catData.length;
+
+            jsonContentElement.textContent = `Average Intelligence: ${averageIntelligence.toFixed(2)}`;
+        }
+
+        function displayAverageIntelligenceForChildFriendly() {
+            const jsonContentElement = document.getElementById('azay');
+            jsonContentElement.innerHTML = "";
+
+            const childFriendlyCats = catData.filter(cat => cat.child_friendly > 0);
+            const intelligenceSum = childFriendlyCats.reduce((sum, cat) => sum + cat.intelligence, 0);
+            const averageIntelligence = intelligenceSum / childFriendlyCats.length;
+
+            jsonContentElement.textContent = `Average Intelligence for Child Friendly: ${averageIntelligence.toFixed(2)}`;
+        }
+    </script>
+</body>
+</html>
